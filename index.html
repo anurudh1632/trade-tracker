@@ -473,8 +473,23 @@ white-space: nowrap;
 
 <div class="section-heading">💰 Income</div>
 
-<div class="form-group">
-  <label class="form-label">Trading Profit (₹)</label>
+<div class="form-row">
+  <div class="form-group">
+    <label class="form-label">Investment (₹)</label>
+    <input class="form-input" id="fInvestment" type="number" placeholder="0" inputmode="decimal" oninput="calcProfit()" />
+  </div>
+  <div class="form-group">
+    <label class="form-label">Current Balance (₹)</label>
+    <input class="form-input" id="fBalance" type="number" placeholder="0" inputmode="decimal" oninput="calcProfit()" />
+  </div>
+</div>
+
+<div id="profitPreview" style="display:none; background:#1e222d; border-radius:10px; padding:12px 14px; margin-bottom:16px; border:1px solid #2a2f3d;">
+  <div style="font-size:0.65rem; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Calculated Profit / Loss</div>
+  <div id="profitPreviewVal" style="font-family:'Syne',sans-serif; font-weight:800; font-size:1.2rem;"></div>
+</div>
+
+<div class="form-group" style="display:none">
   <input class="form-input" id="fProfit" type="number" placeholder="0" inputmode="decimal" />
 </div>
 
@@ -563,6 +578,22 @@ white-space: nowrap;
     return (n < 0 ? '-' : '') + '₹' + abs.toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 0});
   }
 
+  function calcProfit() {
+    const inv = parseFloat(document.getElementById('fInvestment').value) || 0;
+    const bal = parseFloat(document.getElementById('fBalance').value) || 0;
+    const profit = bal - inv;
+    document.getElementById('fProfit').value = profit;
+    const preview = document.getElementById('profitPreview');
+    const previewVal = document.getElementById('profitPreviewVal');
+    if (inv || bal) {
+      preview.style.display = 'block';
+      previewVal.textContent = fmt(profit);
+      previewVal.style.color = profit > 0 ? '#00e5a0' : profit < 0 ? '#ff4f6a' : '#f5c542';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
   function calcNet(ev) {
     return (ev.profit||0) - (ev.commute||0) - (ev.food||0) - (ev.ticket||0) - (ev.misc||0);
   }
@@ -620,6 +651,14 @@ white-space: nowrap;
           </div>
           <div class="card-body" id="body-${ev.id}">
             <div class="expense-row">
+              <span class="expense-label">💵 Investment</span>
+              <span class="expense-val">${fmt(ev.investment||0)}</span>
+            </div>
+            <div class="expense-row">
+              <span class="expense-label">🏦 Balance</span>
+              <span class="expense-val">${fmt(ev.balance||0)}</span>
+            </div>
+            <div class="expense-row">
               <span class="expense-label">🟢 Trading Profit</span>
               <span class="expense-val income">${fmt(ev.profit||0)}</span>
             </div>
@@ -671,7 +710,14 @@ white-space: nowrap;
     document.getElementById('modalTitle').textContent = ev ? 'Edit Event' : 'New Event';
     document.getElementById('fName').value = ev ? ev.name : '';
     document.getElementById('fDate').value = ev ? ev.date : new Date().toISOString().split('T')[0];
+    document.getElementById('fInvestment').value = ev ? (ev.investment || '') : '';
+    document.getElementById('fBalance').value = ev ? (ev.balance || '') : '';
     document.getElementById('fProfit').value = ev ? (ev.profit || '') : '';
+    document.getElementById('profitPreview').style.display = ev && ev.profit ? 'block' : 'none';
+    if (ev && ev.profit) {
+      document.getElementById('profitPreviewVal').textContent = fmt(ev.profit);
+      document.getElementById('profitPreviewVal').style.color = ev.profit > 0 ? '#00e5a0' : ev.profit < 0 ? '#ff4f6a' : '#f5c542';
+    }
     document.getElementById('fCommute').value = ev ? (ev.commute || '') : '';
     document.getElementById('fFood').value = ev ? (ev.food || '') : '';
     document.getElementById('fTicket').value = ev ? (ev.ticket || '') : '';
@@ -693,6 +739,8 @@ white-space: nowrap;
       id: editId || Date.now().toString(),
       name,
       date: document.getElementById('fDate').value,
+      investment: parseFloat(document.getElementById('fInvestment').value) || 0,
+      balance: parseFloat(document.getElementById('fBalance').value) || 0,
       profit: parseFloat(document.getElementById('fProfit').value) || 0,
       commute: parseFloat(document.getElementById('fCommute').value) || 0,
       food: parseFloat(document.getElementById('fFood').value) || 0,
