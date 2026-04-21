@@ -27,14 +27,15 @@ top: 0;
 z-index: 100;
 }
 
-.header-top { display: flex; justify-content: space-between; align-items: center; }
+.header-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 
 .app-title {
 font-family: ‘Syne’, sans-serif;
 font-weight: 800;
-font-size: 1.3rem;
+font-size: 1.1rem;
 letter-spacing: -0.5px;
 color: #00e5a0;
+white-space: nowrap;
 }
 
 .app-subtitle {
@@ -68,6 +69,8 @@ font-size: 0.75rem;
 padding: 8px 12px;
 cursor: pointer;
 margin-right: 8px;
+white-space: nowrap;
+flex-shrink: 0;
 }
 
 .sync-bar {
@@ -132,10 +135,10 @@ padding: 14px 10px;
 .expense-section { margin-bottom: 10px; }
 .expense-section-title { font-size: 0.65rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
 
-.expense-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 0.78rem; }
+.expense-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 4px 0; font-size: 0.78rem; gap: 8px; }
 .expense-row:not(:last-child) { border-bottom: 1px dashed #2a2f3d; }
-.expense-label { color: #6b7280; }
-.expense-val { color: #e8eaf0; font-weight: 500; }
+.expense-label { color: #6b7280; flex: 1; }
+.expense-val { color: #e8eaf0; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
 .expense-val.income { color: #00e5a0; }
 .expense-val.expense { color: #ff4f6a; }
 .expense-section-total { display: flex; justify-content: space-between; font-size: 0.78rem; padding-top: 5px; border-top: 1px solid #2a2f3d; margin-top: 2px; }
