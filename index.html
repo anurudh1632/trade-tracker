@@ -246,8 +246,17 @@ border: 1px solid #2a2f3d;
 .item-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
 
 .item-row {
-display: grid;
-grid-template-columns: 1fr 110px 36px;
+display: flex;
+flex-direction: column;
+gap: 5px;
+background: #0d0f14;
+border: 1px solid #2a2f3d;
+border-radius: 10px;
+padding: 8px;
+}
+
+.item-row-top {
+display: flex;
 gap: 6px;
 align-items: center;
 }
@@ -513,9 +522,11 @@ white-space: nowrap;
     row.className = 'item-row';
     row.dataset.id = id;
     row.innerHTML = `
-      <input class="item-input" placeholder="Description" value="${escHtml(desc)}" oninput="updateCatTotal('${cat}')" />
-      <input class="item-input" type="number" placeholder="0" value="${amt}" inputmode="decimal" oninput="updateCatTotal('${cat}')" />
-      <button class="btn-remove-item" onclick="removeItem(this,'${cat}')">×</button>
+      <div class="item-row-top">
+        <input class="item-input" placeholder="Description" value="${escHtml(desc)}" oninput="updateCatTotal('${cat}')" style="flex:1;" />
+        <button class="btn-remove-item" onclick="removeItem(this,'${cat}')">×</button>
+      </div>
+      <input class="item-input" type="number" placeholder="0" value="${amt}" inputmode="decimal" oninput="updateCatTotal('${cat}')" style="width:100%;" />
     `;
     list.appendChild(row);
     updateCatTotal(cat);
@@ -531,7 +542,8 @@ white-space: nowrap;
     const rows = list.querySelectorAll('.item-row');
     let total = 0;
     rows.forEach(r => {
-      const amt = parseFloat(r.querySelectorAll('input')[1].value) || 0;
+      const inputs = r.querySelectorAll('input');
+      const amt = parseFloat(inputs[1].value) || 0;
       total += amt;
     });
     document.getElementById(cat + 'Total').textContent = fmt(total);
