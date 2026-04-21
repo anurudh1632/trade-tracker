@@ -57,6 +57,19 @@ padding: 9px 16px;
 cursor: pointer;
 }
 
+.btn-import {
+background: transparent;
+color: #00e5a0;
+border: 1px solid #00e5a0;
+border-radius: 10px;
+font-family: ‘Syne’, sans-serif;
+font-weight: 700;
+font-size: 0.75rem;
+padding: 8px 12px;
+cursor: pointer;
+margin-right: 8px;
+}
+
 .sync-bar {
 background: #1e222d;
 border-bottom: 1px solid #2a2f3d;
@@ -339,7 +352,10 @@ white-space: nowrap;
       <div class="app-title">📈 Trade Event P&L</div>
       <div class="app-subtitle">Profit & Loss Tracker</div>
     </div>
-    <button class="btn-new" onclick="openModal()">+ New Event</button>
+    <div style="display:flex;align-items:center;">
+      <button class="btn-import" onclick="importFromSheets()">⬇️ Sync</button>
+      <button class="btn-new" onclick="openModal()">+ New Event</button>
+    </div>
   </div>
 </header>
 
@@ -579,6 +595,29 @@ white-space: nowrap;
   }
 
   // --- STORAGE ---
+  async function importFromSheets() {
+    setSyncStatus('syncing', 'Importing from Google Sheets...');
+    try {
+      const res = await fetch(SCRIPT_URL + '?action=get');
+      const data = await res.json();
+      if (data.status === 'ok' && data.events.length) {
+        events = data.events;
+        saveToStorage();
+        render();
+        setSyncStatus('synced', 'Imported ' + data.events.length + ' events ✓');
+        showToast('✅ ' + data.events.length + ' events imported!');
+      } else {
+        setSyncStatus('', 'Ready');
+        showToast('No events found in sheet');
+      }
+      setTimeout(() => setSyncStatus('', 'Ready'), 3000);
+    } catch(err) {
+      setSyncStatus('error', 'Import failed');
+      showToast('❌ Import failed — check connection');
+      setTimeout(() => setSyncStatus('', 'Ready'), 4000);
+    }
+  }
+
   function loadEvents() {
     try { events = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
     catch(e) { events = []; }
