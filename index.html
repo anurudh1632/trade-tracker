@@ -78,16 +78,16 @@ letter-spacing: 0.04em;
 
 .summary-strip {
 display: grid;
-grid-template-columns: 1fr 1fr 1fr;
+grid-template-columns: 1fr 1fr 1fr 1fr;
 background: #1e222d;
 border-bottom: 1px solid #2a2f3d;
-padding: 14px 20px;
+padding: 14px 10px;
 }
 
 .strip-item { text-align: center; }
 .strip-item:not(:last-child) { border-right: 1px solid #2a2f3d; }
-.strip-label { font-size: 0.58rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em; }
-.strip-value { font-family: ‘Syne’, sans-serif; font-weight: 700; font-size: 1rem; margin-top: 2px; }
+.strip-label { font-size: 0.55rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; }
+.strip-value { font-family: ‘Syne’, sans-serif; font-weight: 700; font-size: 0.9rem; margin-top: 2px; }
 .strip-value.green { color: #00e5a0; }
 .strip-value.red { color: #ff4f6a; }
 .strip-value.yellow { color: #f5c542; }
@@ -354,8 +354,12 @@ white-space: nowrap;
     <div class="strip-value yellow" id="totalEvents">0</div>
   </div>
   <div class="strip-item">
-    <div class="strip-label">Total Profit</div>
+    <div class="strip-label">Profit</div>
     <div class="strip-value green" id="totalProfit">₹0</div>
+  </div>
+  <div class="strip-item">
+    <div class="strip-label">Expenses</div>
+    <div class="strip-value red" id="totalExpenses">₹0</div>
   </div>
   <div class="strip-item">
     <div class="strip-label">Net P&L</div>
@@ -645,9 +649,11 @@ white-space: nowrap;
     const list = document.getElementById('eventsList');
     const totalProfit = events.reduce((s,e) => s + (e.profit||0), 0);
     const totalNet = events.reduce((s,e) => s + calcNet(e), 0);
+    const totalExpenses = events.reduce((s,e) => s + getTotalExp(e), 0);
 
     document.getElementById('totalEvents').textContent = events.length;
     document.getElementById('totalProfit').textContent = fmt(totalProfit);
+    document.getElementById('totalExpenses').textContent = fmt(totalExpenses);
     const netEl = document.getElementById('totalNet');
     netEl.textContent = fmt(totalNet);
     netEl.className = 'strip-value ' + (totalNet > 0 ? 'green' : totalNet < 0 ? 'red' : 'yellow');
