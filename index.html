@@ -27,7 +27,6 @@
 
 html, body {
 background: #0d0f14 !important;
-background-color: #0d0f14 !important;
 color: #e8eaf0;
 font-family: ‘DM Mono’, ‘Courier New’, monospace;
 min-height: 100vh;
@@ -76,6 +75,36 @@ font-size: 0.8rem;
 padding: 9px 16px;
 cursor: pointer;
 letter-spacing: 0.02em;
+}
+
+/* SYNC STATUS */
+.sync-bar {
+background: #1e222d;
+border-bottom: 1px solid #2a2f3d;
+padding: 6px 20px;
+display: flex;
+align-items: center;
+gap: 6px;
+font-size: 0.65rem;
+color: #6b7280;
+letter-spacing: 0.04em;
+}
+
+.sync-dot {
+width: 6px;
+height: 6px;
+border-radius: 50%;
+background: #6b7280;
+flex-shrink: 0;
+}
+
+.sync-dot.syncing { background: #f5c542; animation: pulse 1s infinite; }
+.sync-dot.synced { background: #00e5a0; }
+.sync-dot.error { background: #ff4f6a; }
+
+@keyframes pulse {
+0%, 100% { opacity: 1; }
+50% { opacity: 0.3; }
 }
 
 .summary-strip {
@@ -245,7 +274,6 @@ cursor: pointer;
 .btn-edit { background: #1e222d; color: #e8eaf0; border: 1px solid #2a2f3d; }
 .btn-delete { background: rgba(255,79,106,0.12); color: #ff4f6a; border: 1px solid rgba(255,79,106,0.3); }
 
-/* MODAL */
 .modal-overlay {
 display: none;
 position: fixed;
@@ -370,6 +398,25 @@ letter-spacing: 0.04em;
 .net-badge.pos { background: rgba(0,229,160,0.12); color: #00e5a0; }
 .net-badge.neg { background: rgba(255,79,106,0.12); color: #ff4f6a; }
 .net-badge.zero { background: rgba(245,197,66,0.12); color: #f5c542; }
+
+.toast {
+position: fixed;
+bottom: 30px;
+left: 50%;
+transform: translateX(-50%);
+background: #1e222d;
+border: 1px solid #2a2f3d;
+color: #e8eaf0;
+padding: 10px 20px;
+border-radius: 20px;
+font-size: 0.78rem;
+z-index: 999;
+opacity: 0;
+transition: opacity 0.3s;
+white-space: nowrap;
+}
+
+.toast.show { opacity: 1; }
 </style>
 
 </head>
@@ -384,6 +431,11 @@ letter-spacing: 0.04em;
     <button class="btn-new" onclick="openModal()">+ New Event</button>
   </div>
 </header>
+
+<div class="sync-bar">
+  <div class="sync-dot" id="syncDot"></div>
+  <span id="syncText">Ready</span>
+</div>
 
 <div class="summary-strip">
   <div class="strip-item">
@@ -462,8 +514,12 @@ letter-spacing: 0.04em;
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
   const STORAGE_KEY = 'tradeEventsPnL_v1';
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyoOzSTV7tN6oV73uLhrXb8WJk7PkR4UCIso3poHcBCJZhvjB5B3ztwSqZm2dapQg0D/exec';
+
   let events = [];
   let editId = null;
 
@@ -477,23 +533,53 @@ letter-spacing: 0.04em;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
   }
 
+  function setSyncStatus(status, text) {
+    const dot = document.getElementById('syncDot');
+    const txt = document.getElementById('syncText');
+    dot.className = 'sync-dot ' + status;
+    txt.textContent = text;
+  }
+
+  async function syncToSheets(eventData, isDelete = false) {
+    setSyncStatus('syncing', 'Syncing to Google Sheets...');
+    try {
+      const payload = isDelete ? { id: eventData.id, _delete: true } : eventData;
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      setSyncStatus('synced', 'Saved to Google Sheets ✓');
+      setTimeout(() => setSyncStatus('', 'Ready'), 3000);
+    } catch(err) {
+      setSyncStatus('error', 'Sync failed — saved locally only');
+      setTimeout(() => setSyncStatus('', 'Ready'), 4000);
+    }
+  }
+
   function fmt(n) {
     const abs = Math.abs(n);
     return (n < 0 ? '-' : '') + '₹' + abs.toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 0});
   }
 
   function calcNet(ev) {
-    const totalExp = (ev.commute||0) + (ev.food||0) + (ev.ticket||0) + (ev.misc||0);
-    return (ev.profit||0) - totalExp;
+    return (ev.profit||0) - (ev.commute||0) - (ev.food||0) - (ev.ticket||0) - (ev.misc||0);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
   }
 
   function render() {
     const list = document.getElementById('eventsList');
-    const totalEvents = events.length;
     const totalProfit = events.reduce((s,e) => s + (e.profit||0), 0);
     const totalNet = events.reduce((s,e) => s + calcNet(e), 0);
 
-    document.getElementById('totalEvents').textContent = totalEvents;
+    document.getElementById('totalEvents').textContent = events.length;
     document.getElementById('totalProfit').textContent = fmt(totalProfit);
     const netEl = document.getElementById('totalNet');
     netEl.textContent = fmt(totalNet);
@@ -599,7 +685,7 @@ letter-spacing: 0.04em;
     editId = null;
   }
 
-  function saveEvent() {
+  async function saveEvent() {
     const name = document.getElementById('fName').value.trim();
     if (!name) { alert('Please enter an event name.'); return; }
 
@@ -624,6 +710,8 @@ letter-spacing: 0.04em;
     saveToStorage();
     closeModal();
     render();
+    showToast('Event saved! Syncing...');
+    await syncToSheets(data);
   }
 
   function editEvent(id) {
@@ -631,11 +719,14 @@ letter-spacing: 0.04em;
     if (ev) openModal(ev);
   }
 
-  function deleteEvent(id) {
+  async function deleteEvent(id) {
     if (!confirm('Delete this event?')) return;
+    const ev = events.find(e => e.id === id);
     events = events.filter(e => e.id !== id);
     saveToStorage();
     render();
+    showToast('Event deleted');
+    if (ev) await syncToSheets(ev, true);
   }
 
   document.getElementById('modalOverlay').addEventListener('click', function(e) {
