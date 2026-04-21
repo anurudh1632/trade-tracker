@@ -247,7 +247,7 @@ border: 1px solid #2a2f3d;
 
 .item-row {
 display: grid;
-grid-template-columns: 1fr 100px 32px;
+grid-template-columns: 1fr 110px 36px;
 gap: 6px;
 align-items: center;
 }
@@ -514,7 +514,7 @@ white-space: nowrap;
     row.dataset.id = id;
     row.innerHTML = `
       <input class="item-input" placeholder="Description" value="${escHtml(desc)}" oninput="updateCatTotal('${cat}')" />
-      <input class="item-input" type="number" placeholder="₹ Amount" value="${amt}" inputmode="decimal" oninput="updateCatTotal('${cat}')" />
+      <input class="item-input" type="number" placeholder="0" value="${amt}" inputmode="decimal" oninput="updateCatTotal('${cat}')" />
       <button class="btn-remove-item" onclick="removeItem(this,'${cat}')">×</button>
     `;
     list.appendChild(row);
