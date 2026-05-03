@@ -612,7 +612,10 @@
       const res = await fetch(SCRIPT_URL + '?action=get');
       const data = await res.json();
       if (data.status === 'ok' && data.events.length) {
-        events = data.events;
+        events = data.events.map(ev => ({
+          ...ev,
+          date: ev.date ? (() => { const d = new Date(ev.date); return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0]; })() : ''
+        }));
         saveToStorage();
         render();
         setSyncStatus('synced', 'Imported ' + data.events.length + ' events ✓');
@@ -728,7 +731,12 @@
       const cardClass = net > 0 ? 'profit-card' : net < 0 ? 'loss-card' : 'neutral-card';
       const pnlClass = net > 0 ? 'pos' : net < 0 ? 'neg' : 'zero';
       const badgeText = net > 0 ? 'PROFIT' : net < 0 ? 'LOSS' : 'BREAK EVEN';
-      const dateStr = ev.date && ev.date !== 'Invalid Date' ? (() => { const d = new Date(ev.date + 'T00:00:00'); return isNaN(d) ? '—' : d.toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}); })() : '—';
+      const dateStr = (() => {
+        if (!ev.date) return '—';
+        const d = new Date(ev.date);
+        if (isNaN(d.getTime())) return '—';
+        return d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+      })();
 
       const catHTML = CATS.map(cat => {
         const items = ev[cat] || [];
