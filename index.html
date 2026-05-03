@@ -614,7 +614,14 @@
       if (data.status === 'ok' && data.events.length) {
         events = data.events.map(ev => ({
           ...ev,
-          date: ev.date ? (() => { const d = new Date(ev.date); return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0]; })() : ''
+          date: ev.date ? (() => {
+            const d = new Date(ev.date);
+            if (isNaN(d.getTime())) return '';
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          })() : ''
         }));
         saveToStorage();
         render();
